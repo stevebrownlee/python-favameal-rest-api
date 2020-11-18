@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework import serializers
 from favamealapi.models import Meal, MealRating, Restaurant, FavoriteMeal
 from favamealapi.views.restaurant import RestaurantSerializer
+from django.db.models import Avg
 
 
 class MealSerializer(serializers.ModelSerializer):
@@ -16,7 +17,7 @@ class MealSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Meal
-        fields = ('id', 'name', 'restaurant')
+        fields = ('id', 'name', 'restaurant', 'user_rating', 'avg_rating')
 
 
 class MealView(ViewSet):
@@ -61,7 +62,31 @@ class MealView(ViewSet):
         Returns:
             Response -- JSON serialized list of meals
         """
-        meals = Meal.objects.all()
+        meals = Meal.objects.annotate(avg_rating=Avg('mealrating__rating'))
+
+        # Rating from current user
+        for meal in meals:
+            try:
+                user_rating_relationship = MealRating.objects.get(meal=meal, user=request.auth.user)
+                meal.user_rating = user_rating_relationship.rating
+            except MealRating.DoesNotExist:
+                meal.user_rating = 0
+
+            # Average rating across all users
+            # try:
+            #     rating_sum = 0
+            #     all_ratings_for_meal = MealRating.objects.filter(meal=meal)
+
+            #     for rating in all_ratings_for_meal:
+            #         rating_sum += rating.rating
+
+            #     meal.avg_rating = rating_sum / all_ratings_for_meal.count()
+            # except MealRating.DoesNotExist:
+            #     meal.avg_rating = 0
+
+
+
+
 
         serializer = MealSerializer(
             meals, many=True, context={'request': request})
