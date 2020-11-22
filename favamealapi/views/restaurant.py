@@ -1,16 +1,13 @@
 """View module for handling requests about restaurants"""
-from favamealapi.models.favoriterestaurant import FavoriteRestaurant
 from django.core.exceptions import ValidationError
+from django.db.models import Count, Q
 from django.http import HttpResponseServerError
-from django.contrib.auth import get_user_model
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.decorators import action
-from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
-from rest_framework import serializers
+from rest_framework.viewsets import ViewSet
 from favamealapi.models import Restaurant
-from django.db.models import Count
-from django.db.models import Q
+from favamealapi.models.favoriterestaurant import FavoriteRestaurant
 
 
 class RestaurantSerializer(serializers.ModelSerializer):
