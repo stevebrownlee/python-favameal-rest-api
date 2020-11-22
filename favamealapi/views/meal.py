@@ -8,7 +8,6 @@ from rest_framework.response import Response
 from rest_framework import serializers
 from favamealapi.models import Meal, MealRating, Restaurant, FavoriteMeal
 from favamealapi.views.restaurant import RestaurantSerializer
-from django.db.models import Avg
 
 
 class MealSerializer(serializers.ModelSerializer):
@@ -50,6 +49,14 @@ class MealView(ViewSet):
         """
         try:
             meal = Meal.objects.get(pk=pk)
+
+            # TODO: Get the rating for current user and assign to `user_rating` property
+
+            # TODO: Get the average rating for requested meal and assign to `avg_rating` property
+
+            # TODO: Assign a value to the `is_favorite` property of requested meal
+
+
             serializer = RestaurantSerializer(
                 meal, context={'request': request})
             return Response(serializer.data)
@@ -62,105 +69,27 @@ class MealView(ViewSet):
         Returns:
             Response -- JSON serialized list of meals
         """
-        meals = Meal.objects.annotate(avg_rating=Avg('mealrating__rating'))
+        meals = Meal.objects.all()
 
-        # Rating from current user
-        for meal in meals:
-            try:
-                user_rating_relationship = MealRating.objects.get(meal=meal, user=request.auth.user)
-                meal.user_rating = user_rating_relationship.rating
-            except MealRating.DoesNotExist:
-                meal.user_rating = 0
+        # TODO: Get the rating for current user and assign to `user_rating` property
 
-            # Average rating across all users
-            # try:
-            #     rating_sum = 0
-            #     all_ratings_for_meal = MealRating.objects.filter(meal=meal)
+        # TODO: Get the average rating for each meal and assign to `avg_rating` property
 
-            #     for rating in all_ratings_for_meal:
-            #         rating_sum += rating.rating
-
-            #     meal.avg_rating = rating_sum / all_ratings_for_meal.count()
-            # except MealRating.DoesNotExist:
-            #     meal.avg_rating = 0
-
-
-
-
+        # TODO: Assign a value to the `is_favorite` property of each meal
 
         serializer = MealSerializer(
             meals, many=True, context={'request': request})
 
         return Response(serializer.data)
 
-    @action(methods=['post', 'put'], detail=True)
-    def rate(self, request, pk):
-        """Managing rating for meals"""
+    # TODO: Add a custom action named `rate` that will allow a client to send a
+    #  POST and a PUT request to /meals/3/rate with a body of..
+    #       {
+    #           "rating": 3
+    #       }
 
-        user = request.auth.user
 
-        if request.method == "POST":
-            meal = Meal.objects.get(pk=pk)
 
-            try:
-                MealRating.objects.get(meal=meal, user=user)
 
-                return Response(
-                    {'message': 'This meal already has a rating. Send a PUT request to modify it.'},
-                    status=status.HTTP_422_UNPROCESSABLE_ENTITY
-                )
-            except MealRating.DoesNotExist:
-                rating = MealRating()
-                rating.meal = meal
-                rating.user = user
-                rating.rating = request.data["rating"]
-                rating.save()
-
-                return Response({}, status=status.HTTP_201_CREATED)
-
-    @action(methods=['post', 'delete'], detail=True)
-    def star(self, request, pk):
-        """Managing favorites for meals"""
-
-        user = request.auth.user
-
-        if request.method == "POST":
-            meal = Meal.objects.get(pk=pk)
-
-            try:
-                FavoriteMeal.objects.get(meal=meal, user=user)
-
-                return Response(
-                    {'message': 'This meal already a favorite.'},
-                    status=status.HTTP_422_UNPROCESSABLE_ENTITY
-                )
-            except FavoriteMeal.DoesNotExist:
-                favorite = FavoriteMeal()
-                favorite.meal = meal
-                favorite.user = user
-                favorite.save()
-
-                return Response({}, status=status.HTTP_201_CREATED)
-
-        elif request.method == "DELETE":
-            try:
-                meal = Meal.objects.get(pk=pk)
-            except Meal.DoesNotExist:
-                return Response(
-                    {'message': 'Meal does not exist.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            try:
-                fave = FavoriteMeal.objects.get(
-                    meal=meal, user=user)
-                fave.delete()
-                return Response({}, status=status.HTTP_204_NO_CONTENT)
-
-            except FavoriteMeal.DoesNotExist:
-                return Response(
-                    {'message': 'Not a current favorite meal.'},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-
-        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    # TODO: Add a custom action named `star` that will allow a client to send a
+    #  POST and a DELETE request to /meals/3/star.
